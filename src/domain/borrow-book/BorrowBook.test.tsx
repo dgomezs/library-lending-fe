@@ -18,28 +18,36 @@ afterEach(() => server.resetHandlers());
 
 type BorrowBookTestProps = {
   memberId: string;
-}; /* could also use interface */
+}; 
+
+function ShowUserMessage({userMessage, errorMessage, isPending}: {userMessage?:string, errorMessage?:string, isPending:boolean}) {
+
+  if (isPending){
+    return <div>Loading ...</div>
+  }
+  if (!isPending && errorMessage) {
+    return <span data-testid="error-message">{errorMessage}</span>;
+  }
+  if (!isPending && userMessage) {
+    return <span data-testid="user-message">{userMessage}</span>;
+  }
+  return null
+}
+
+
 
 const BorrowBookTestComponent = ({ memberId }: BorrowBookTestProps) => {
-  const { data, error, borrowBook } = useBorrowBook();
+  const { borrowBookId, error, borrowBook, isPending } = useBorrowBook();
   const [bookId, setBookId] = useState("");
   const handleSubmit = (event: { preventDefault: () => void; }) => {
     event.preventDefault();
     borrowBook(memberId, bookId);
   };
 
-  if (error) {
-    return <span data-testid="user-message">The error is {error.message}</span>;
-  }
-  if (data)
-    return (
-      <span data-testid="user-message">
-        The book copy is {data?.bookCopyId}
-      </span>
-    );
   return (
     <div>
       <span>{memberId}</span>
+      <ShowUserMessage userMessage={borrowBookId} errorMessage={error?.message} isPending={isPending}/>
       <input
         data-testid="borrow-book-id-input"
         type="text"
@@ -57,8 +65,8 @@ test("should borrow a book", async () => {
     bookExists:true, 
     memberId: VALID_MEMBER_ID
   });
-  borrowBook("1");
-  await verifyBookHasBeenBorrowed();
+  borrowBook(EXPECTED_BOOK_COPY_ID);
+  await verifyBookHasBeenBorrowed(EXPECTED_BOOK_COPY_ID);
 });
 
 test("should not borrow a book if the member is invalid", async () => {
@@ -67,8 +75,8 @@ test("should not borrow a book if the member is invalid", async () => {
     bookExists: true,
     memberId: INVALID_MEMBER_ID
   });
-  borrowBook("1");
-  await verifyMessageToUser(BorrowBookErrorKeys.INVALID_MEMBER);
+  borrowBook(EXPECTED_BOOK_COPY_ID);
+  await verifyErrorMessage(BorrowBookErrorKeys.INVALID_MEMBER);
 });
 
 
@@ -76,18 +84,26 @@ test("should not borrow a book if the book does not exist", async () => {
   arrange({
     bookExists: false
   });
-  borrowBook("1");
-  await verifyMessageToUser(BorrowBookErrorKeys.BOOK_NOT_FOUND);
+  borrowBook(EXPECTED_BOOK_COPY_ID);
+  await verifyErrorMessage(BorrowBookErrorKeys.BOOK_NOT_FOUND);
 });
 
 
-async function verifyBookHasBeenBorrowed() {
- return verifyMessageToUser(EXPECTED_BOOK_COPY_ID);
+async function verifyBookHasBeenBorrowed(borrowedBookId:string) {
+ await verifyMessageToUser(borrowedBookId);
 }
 
-async function verifyMessageToUser(message: string) {
+async function verifyMessageToUser(message:string) {
+  await verifyMessage(message, "user-message")  
+}
+
+async function verifyErrorMessage(message:string) {
+  await verifyMessage(message, "error-message")  
+}
+
+async function verifyMessage(message: string, elementDataId:string) {
   const userMessageElement: Element = await screen.findByTestId(
-    "user-message",
+    elementDataId,
     undefined,
     {
       timeout: 1500,
@@ -96,7 +112,7 @@ async function verifyMessageToUser(message: string) {
       },
     }
   );
-  expect(userMessageElement.textContent).toContain(message);
+  expect(userMessageElement.textContent).toEqual(message);
 }
 
 function arrange({

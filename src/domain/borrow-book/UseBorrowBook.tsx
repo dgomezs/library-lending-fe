@@ -7,7 +7,7 @@ export interface ApiErrorResponse {
 }
 
 export interface BorrowBookApiResponse {
-  bookCopyId: string;
+  borrowedBookId: string;
 }
 
 async function borrowBook([
@@ -26,8 +26,8 @@ async function borrowBook([
 }
 
 export function useBorrowBook() {
-  const data = useAsync<BorrowBookApiResponse>({ deferFn: borrowBook });
-  return { ...data, borrowBook: data.run };
+  const result = useAsync<BorrowBookApiResponse>({ deferFn: borrowBook });
+  return {isPending: result.isPending, borrowBook: result.run, borrowBookId: result.data?.borrowedBookId, error: result.error };
 }
 
 export enum BorrowBookErrorKeys {

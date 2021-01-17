@@ -13,9 +13,10 @@ export const VALID_MEMBER_ID = "1";
 const validBorrowBook = rest.post<BorrowBookApiResponse, any>(
   borrowBookEndPoint(VALID_MEMBER_ID, BORROW_BOOK_PARAM),
   async (req, res, ctx) => {
+    const {bookId} = req.params
     return res(
       ctx.delay(delay),
-      ctx.json({ bookCopyId: EXPECTED_BOOK_COPY_ID })
+      ctx.json({ borrowedBookId: bookId })
     );
   }
 );
