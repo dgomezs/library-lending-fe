@@ -1,5 +1,5 @@
-import React, {useState} from "react";
-import {render, screen, fireEvent} from "@testing-library/react";
+import React from "react";
+import {renderHook, act} from '@testing-library/react-hooks'
 import {setupServer} from "msw/node";
 import {
     validBorrowBook,
@@ -9,119 +9,64 @@ import {
     INVALID_MEMBER_ID,
     bookDoesNotExist,
 } from "./api-mock-responses";
-import {BorrowBookErrorKeys, useBorrowBook} from "./UseBorrowBook";
+import {BorrowBookErrorKeys, UseBorrowBook, useBorrowBook} from "./UseBorrowBook";
 
 const server = setupServer();
 beforeAll(() => server.listen());
 afterAll(() => server.close());
 afterEach(() => server.resetHandlers());
 
-type BorrowBookTestProps = {
-    memberId: string;
-};
-
-function ShowUserMessage({userMessage, errorMessage, isPending}: { userMessage?: string, errorMessage?: string, isPending: boolean }) {
-
-    if (isPending) {
-        return <div>Loading ...</div>
-    }
-    if (errorMessage) {
-        return <span data-testid="error-message">{errorMessage}</span>;
-    }
-    if (userMessage) {
-        return <span data-testid="user-message">{userMessage}</span>;
-    }
-    return null
-}
-
-
-const BorrowBookTestComponent = ({memberId}: BorrowBookTestProps) => {
-    const {borrowBookId, error, borrowBook, isPending} = useBorrowBook();
-    const [bookId, setBookId] = useState("");
-    const handleSubmit = (event: { preventDefault: () => void; }) => {
-        event.preventDefault();
-        borrowBook(memberId, bookId);
-    };
-
-    return (
-        <div>
-            <span>{memberId}</span>
-            <ShowUserMessage userMessage={borrowBookId} errorMessage={error?.message} isPending={isPending}/>
-            <input
-                data-testid="borrow-book-id-input"
-                type="text"
-                value={bookId}
-                onChange={(e) => setBookId(e.target.value)}
-            />
-            <button data-testid="borrow-book-button" onClick={handleSubmit}/>
-        </div>
-    );
-};
 
 test("should borrow a book", async () => {
-    arrange({
+
+    const {result, waitForNextUpdate, borrowBook} = arrange({
         memberIsValid: true,
         bookExists: true,
-        memberId: VALID_MEMBER_ID
     });
-    borrowBook(EXPECTED_BOOK_COPY_ID);
-    await verifyBookHasBeenBorrowed(EXPECTED_BOOK_COPY_ID);
+
+    act(() => {
+        borrowBook(VALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID)
+    })
+    await waitForNextUpdate()
+
+    const {borrowBookId} = result.current
+    expect(borrowBookId).toBe(EXPECTED_BOOK_COPY_ID)
 });
 
 test("should not borrow a book if the member is invalid", async () => {
-    arrange({
+    const {result, waitForNextUpdate, borrowBook} = arrange({
         memberIsValid: false,
         bookExists: true,
-        memberId: INVALID_MEMBER_ID
     });
-    borrowBook(EXPECTED_BOOK_COPY_ID);
-    await verifyErrorMessage(BorrowBookErrorKeys.INVALID_MEMBER);
+    act(() => {
+        borrowBook(INVALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID);
+    })
+    await waitForNextUpdate()
+    const {error} = result.current
+    expect(error.message).toBe(BorrowBookErrorKeys.INVALID_MEMBER);
 });
 
 
 test("should not borrow a book if the book does not exist", async () => {
-    arrange({
+    const {result, waitForNextUpdate, borrowBook} = arrange({
+        memberIsValid: true,
         bookExists: false
     });
-    borrowBook(EXPECTED_BOOK_COPY_ID);
-    await verifyErrorMessage(BorrowBookErrorKeys.BOOK_NOT_FOUND);
+    act(() => {
+        borrowBook(VALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID);
+    })
+    await waitForNextUpdate()
+
+    const {error} = result.current
+    expect(BorrowBookErrorKeys.BOOK_NOT_FOUND).toBe(error.message);
 });
-
-
-async function verifyBookHasBeenBorrowed(borrowedBookId: string) {
-    await verifyMessageToUser(borrowedBookId);
-}
-
-async function verifyMessageToUser(message: string) {
-    await verifyMessage(message, "user-message")
-}
-
-async function verifyErrorMessage(message: string) {
-    await verifyMessage(message, "error-message")
-}
-
-async function verifyMessage(message: string, elementDataId: string) {
-    const userMessageElement: Element = await screen.findByTestId(
-        elementDataId,
-        undefined,
-        {
-            timeout: 1500,
-            onTimeout: () => {
-                throw new Error("timeout");
-            },
-        }
-    );
-    expect(userMessageElement.textContent).toEqual(message);
-}
 
 function arrange({
                      memberIsValid = true,
                      bookExists = true,
-                     memberId = VALID_MEMBER_ID
                  }: {
     memberIsValid?: boolean;
     bookExists?: boolean;
-    memberId?: string;
 }) {
     if (!memberIsValid) {
         server.use(invalidMember);
@@ -130,13 +75,7 @@ function arrange({
     } else {
         server.use(validBorrowBook);
     }
-
-    render(<BorrowBookTestComponent memberId={memberId}/>);
+    const {result, waitForNextUpdate} = renderHook<any, UseBorrowBook>(() => useBorrowBook());
+    return {result, waitForNextUpdate, borrowBook: result.current.borrowBook}
 }
 
-function borrowBook(bookId: string) {
-    const submitButton = screen.getByTestId("borrow-book-button");
-    const bookIdInput = screen.getByTestId("borrow-book-id-input");
-    fireEvent.change(bookIdInput, {target: {value: bookId}});
-    fireEvent.click(submitButton);
-}

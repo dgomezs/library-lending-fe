@@ -1,6 +1,9 @@
 import { useAsync } from "react-async";
 
-
+export enum BorrowBookErrorKeys {
+  INVALID_MEMBER = 'INVALID_MEMBER',
+  BOOK_NOT_FOUND = 'BOOK_NOT_FOUND',
+}
 
 export interface ApiErrorResponse {
   errorKey: string;
@@ -8,6 +11,13 @@ export interface ApiErrorResponse {
 
 export interface BorrowBookApiResponse {
   borrowedBookId: string;
+}
+
+export interface UseBorrowBook {
+  borrowBookId?: string,
+  borrowBook:any,
+  isPending: boolean,
+  error: Error
 }
 
 async function borrowBook([
@@ -25,14 +35,8 @@ async function borrowBook([
   return res.json();
 }
 
-export function useBorrowBook() {
+export function useBorrowBook() :UseBorrowBook {
   const result = useAsync<BorrowBookApiResponse>({ deferFn: borrowBook });
   return {isPending: result.isPending, borrowBook: result.run, borrowBookId: result.data?.borrowedBookId, error: result.error };
 }
 
-export enum BorrowBookErrorKeys {
-    INVALID_MEMBER = 'INVALID_MEMBER', 
-    BOOK_NOT_FOUND = 'BOOK_NOT_FOUND',
-    
-
-} 
