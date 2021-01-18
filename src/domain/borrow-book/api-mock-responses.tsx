@@ -5,7 +5,8 @@ const delay = 300;
 const borrowBookEndPoint = (memberId:string, bookId:string) => `/api/member/${memberId}/borrow/book/${bookId}`;
 const BORROW_BOOK_PARAM = ":bookId"
 
-export const EXPECTED_BOOK_COPY_ID = "2";
+export const EXPECTED_BOOK_COPY_ID = "1";
+export const EXPECTED_BOOK_SECOND_COPY_ID = "2";
 export const INVALID_MEMBER_ID = "2";
 export const VALID_MEMBER_ID = "1";
 

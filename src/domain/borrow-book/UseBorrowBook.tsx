@@ -1,42 +1,69 @@
-import { useAsync } from "react-async";
+import {useAsync} from "react-async";
+import {useBorrowedBooksByMember} from '../borrowed-books-by-member/UseBorrowedBooksByMember'
 
 export enum BorrowBookErrorKeys {
-  INVALID_MEMBER = 'INVALID_MEMBER',
-  BOOK_NOT_FOUND = 'BOOK_NOT_FOUND',
+    INVALID_MEMBER = "INVALID_MEMBER",
+    BOOK_NOT_FOUND = "BOOK_NOT_FOUND",
+    THRESHOLD_BOOKS = "THRESHOLD_BOOKS",
 }
 
 export interface ApiErrorResponse {
-  errorKey: string;
+    errorKey: string;
 }
 
+export const MAX_BORROWED_BOOKS = 2;
+
 export interface BorrowBookApiResponse {
-  borrowedBookId: string;
+    borrowedBookId: string;
 }
 
 export interface UseBorrowBook {
-  borrowBookId?: string,
-  borrowBook:any,
-  isPending: boolean,
-  error: Error
+    borrowBookId?: string,
+    borrowBook: any,
+    isPending: boolean,
+    error: Error,
+    borrowedBooksByMember: string[]
 }
 
-async function borrowBook([
-  memberId,
-  bookId,
-]: any): Promise<BorrowBookApiResponse> {
-  const uri = `/api/member/${memberId}/borrow/book/${bookId}`;
+async function borrowBookApiCall([
+                                     memberId,
+                                     bookId,
+                                     borrowedBooksByMember
+                                 ]: any): Promise<BorrowBookApiResponse> {
 
-  const res = await fetch(uri, { method: "POST" });
-  if (!res.ok) {
-    const data: ApiErrorResponse = await res.json();
-    throw new Error(data.errorKey);
-  }
+    if (borrowedBooksByMember.length >= MAX_BORROWED_BOOKS) {
+        throw new Error(BorrowBookErrorKeys.THRESHOLD_BOOKS);
+    }
 
-  return res.json();
+    const uri = `/api/member/${memberId}/borrow/book/${bookId}`;
+
+    const res = await fetch(uri, {method: "POST"});
+    if (!res.ok) {
+        const data: ApiErrorResponse = await res.json();
+        throw new Error(data.errorKey);
+    }
+
+    return res.json();
 }
 
-export function useBorrowBook() :UseBorrowBook {
-  const result = useAsync<BorrowBookApiResponse>({ deferFn: borrowBook });
-  return {isPending: result.isPending, borrowBook: result.run, borrowBookId: result.data?.borrowedBookId, error: result.error };
+export function useBorrowBook(): UseBorrowBook {
+    const {addBook, state: {borrowedBooksByMember}} = useBorrowedBooksByMember();
+
+    const addBookOnResolve = (data: BorrowBookApiResponse) => addBook(data.borrowedBookId);
+    const result = useAsync<BorrowBookApiResponse>({
+        deferFn: borrowBookApiCall,
+        onResolve: addBookOnResolve,
+    });
+    const borrowBook = (...args: any) => {
+        return result.run(...args, borrowedBooksByMember);
+    };
+
+    return {
+        isPending: result.isPending,
+        borrowBook,
+        borrowBookId: result.data?.borrowedBookId,
+        error: result.error,
+        borrowedBooksByMember
+    };
 }
 
