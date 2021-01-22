@@ -7,7 +7,7 @@ import {
     invalidMember,
     VALID_MEMBER_ID,
     INVALID_MEMBER_ID,
-    bookDoesNotExist, EXPECTED_BOOK_SECOND_COPY_ID,
+    bookDoesNotExist, EXPECTED_BOOK_SECOND_COPY_ID, BOOK_TO_BORROW_ISBN, SECOND_BOOK_TO_BORROW_ISBN,
 } from "./api-mock-responses";
 import {BorrowBookErrorKeys, UseBorrowBook, useBorrowBook} from "./UseBorrowBook";
 import {BorrowBooksByMember} from "../borrowed-books-by-member/BorrowedBooksByMemberContext";
@@ -27,17 +27,17 @@ test("should borrow a book", async () => {
     });
 
     act(() => {
-        borrowBook(VALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID)
+        borrowBook(VALID_MEMBER_ID, BOOK_TO_BORROW_ISBN)
     })
     await waitForNextUpdate()
 
-    const {borrowBookId, borrowedBooksByMember} = result.current
-    expect(borrowBookId).toBe(EXPECTED_BOOK_COPY_ID)
+    const {borrowedBookCopyId, borrowedBooksByMember} = result.current
+    expect(borrowedBookCopyId).toBe(EXPECTED_BOOK_COPY_ID)
     expect(borrowedBooksByMember.length).toBe(1)
     expect(borrowedBooksByMember).toContain(EXPECTED_BOOK_COPY_ID)
 });
 
-test("should borrow two books ", async () => {
+test("should borrow two books", async () => {
 
     const {result, waitForNextUpdate, borrowBook} = arrange({
         memberIsValid: true,
@@ -46,12 +46,12 @@ test("should borrow two books ", async () => {
     });
 
     act(() => {
-        borrowBook(VALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID)
+        borrowBook(VALID_MEMBER_ID, BOOK_TO_BORROW_ISBN)
     })
     await waitForNextUpdate()
 
     act(() => {
-        borrowBook(VALID_MEMBER_ID, EXPECTED_BOOK_SECOND_COPY_ID)
+        borrowBook(VALID_MEMBER_ID, SECOND_BOOK_TO_BORROW_ISBN)
     })
     await waitForNextUpdate()
 
@@ -62,7 +62,7 @@ test("should borrow two books ", async () => {
 });
 
 
-test("should not borrow a book if the member already has borrowed two books ", async () => {
+test("should not borrow a book if the member already has borrowed two books", async () => {
 
     const {result, waitForNextUpdate, borrowBook} = arrange({
         memberIsValid: true,
@@ -87,7 +87,7 @@ test("should not borrow a book if the member is invalid", async () => {
         bookExists: true,
     });
     act(() => {
-        borrowBook(INVALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID);
+        borrowBook(INVALID_MEMBER_ID, BOOK_TO_BORROW_ISBN);
     })
     await waitForNextUpdate()
     const {error} = result.current
@@ -101,7 +101,7 @@ test("should not borrow a book if the book does not exist", async () => {
         bookExists: false
     });
     act(() => {
-        borrowBook(VALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID);
+        borrowBook(VALID_MEMBER_ID, BOOK_TO_BORROW_ISBN);
     })
     await waitForNextUpdate()
 

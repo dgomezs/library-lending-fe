@@ -14,11 +14,11 @@ export interface ApiErrorResponse {
 export const MAX_BORROWED_BOOKS = 2;
 
 export interface BorrowBookApiResponse {
-    borrowedBookId: string;
+    borrowedBookCopyId: string;
 }
 
 export interface UseBorrowBook {
-    borrowBookId?: string,
+    borrowedBookCopyId?: string,
     borrowBook: any,
     isPending: boolean,
     error: Error,
@@ -49,7 +49,7 @@ async function borrowBookApiCall([
 export function useBorrowBook(): UseBorrowBook {
     const {addBook, state: {borrowedBooksByMember}} = useBorrowedBooksByMember();
 
-    const addBookOnResolve = (data: BorrowBookApiResponse) => addBook(data.borrowedBookId);
+    const addBookOnResolve = (data: BorrowBookApiResponse) => addBook(data.borrowedBookCopyId);
     const result = useAsync<BorrowBookApiResponse>({
         deferFn: borrowBookApiCall,
         onResolve: addBookOnResolve,
@@ -61,7 +61,7 @@ export function useBorrowBook(): UseBorrowBook {
     return {
         isPending: result.isPending,
         borrowBook,
-        borrowBookId: result.data?.borrowedBookId,
+        borrowedBookCopyId: result.data?.borrowedBookCopyId,
         error: result.error,
         borrowedBooksByMember
     };
