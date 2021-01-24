@@ -4,10 +4,14 @@ import {setupServer} from "msw/node";
 import {
     validBorrowBook,
     EXPECTED_BOOK_COPY_ID,
-    invalidMember,
-    VALID_MEMBER_ID,
-    INVALID_MEMBER_ID,
-    bookDoesNotExist, EXPECTED_BOOK_SECOND_COPY_ID, BOOK_TO_BORROW_ISBN, SECOND_BOOK_TO_BORROW_ISBN,
+    notRegisteredMember,
+    REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS,
+    NOT_REGISTERED_MEMBER,
+    bookWithoutAvailableCopies,
+    EXPECTED_BOOK_SECOND_COPY_ID,
+    BOOK_WITH_AVAILABLE_COPIES,
+    SECOND_BOOK_WITH_AVAILABLE_COPIES,
+    registeredMemberWithMaxBorrowedBooks, REGISTERED_MEMBER_WITH_THRESHOLD_BOOKS, BOOK_WITHOUT_AVAILABLE_COPIES,
 } from "./api-mock-responses";
 import {BorrowBookErrorKeys, UseBorrowBook, useBorrowBook} from "./UseBorrowBook";
 import {BorrowBooksByMember} from "../borrowed-books-by-member/BorrowedBooksByMemberContext";
@@ -20,17 +24,19 @@ afterEach(() => server.resetHandlers());
 
 test("should borrow a book", async () => {
 
-    const {result, waitForNextUpdate, borrowBook} = arrange({
-        memberIsValid: true,
-        bookExists: true,
-        initialBorrowedBooks: []
-    });
+    // arrange
+    const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
+    server.use(validBorrowBook(EXPECTED_BOOK_COPY_ID))
+    const memberId = REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS;
+    const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
+
 
     act(() => {
-        borrowBook(VALID_MEMBER_ID, BOOK_TO_BORROW_ISBN)
+        borrowBook(memberId, bookIsbn)
     })
     await waitForNextUpdate()
 
+    // assert
     const {borrowedBookCopyId, borrowedBooksByMember} = result.current
     expect(borrowedBookCopyId).toBe(EXPECTED_BOOK_COPY_ID)
     expect(borrowedBooksByMember.length).toBe(1)
@@ -39,19 +45,23 @@ test("should borrow a book", async () => {
 
 test("should borrow two books", async () => {
 
-    const {result, waitForNextUpdate, borrowBook} = arrange({
-        memberIsValid: true,
-        bookExists: true,
-        initialBorrowedBooks: []
-    });
 
+    // arrange
+    const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
+    const memberId = REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS;
+    const firstBookIsbn = BOOK_WITH_AVAILABLE_COPIES;
+    const secondBookIsbn = SECOND_BOOK_WITH_AVAILABLE_COPIES
+
+
+    server.use(validBorrowBook(EXPECTED_BOOK_COPY_ID))
     act(() => {
-        borrowBook(VALID_MEMBER_ID, BOOK_TO_BORROW_ISBN)
+        borrowBook(memberId, firstBookIsbn)
     })
     await waitForNextUpdate()
 
+    server.use(validBorrowBook(EXPECTED_BOOK_SECOND_COPY_ID))
     act(() => {
-        borrowBook(VALID_MEMBER_ID, SECOND_BOOK_TO_BORROW_ISBN)
+        borrowBook(memberId, secondBookIsbn)
     })
     await waitForNextUpdate()
 
@@ -64,14 +74,14 @@ test("should borrow two books", async () => {
 
 test("should not borrow a book if the member already has borrowed two books", async () => {
 
-    const {result, waitForNextUpdate, borrowBook} = arrange({
-        memberIsValid: true,
-        bookExists: true,
-        initialBorrowedBooks: [EXPECTED_BOOK_COPY_ID, EXPECTED_BOOK_SECOND_COPY_ID]
-    });
+    // arrange
+    const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
+    server.use(registeredMemberWithMaxBorrowedBooks)
+    const memberId = REGISTERED_MEMBER_WITH_THRESHOLD_BOOKS;
+    const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
 
     act(() => {
-        borrowBook(VALID_MEMBER_ID, EXPECTED_BOOK_COPY_ID)
+        borrowBook(memberId, bookIsbn)
     })
     await waitForNextUpdate()
 
@@ -81,50 +91,40 @@ test("should not borrow a book if the member already has borrowed two books", as
 });
 
 
-test("should not borrow a book if the member is invalid", async () => {
-    const {result, waitForNextUpdate, borrowBook} = arrange({
-        memberIsValid: false,
-        bookExists: true,
-    });
-    act(() => {
-        borrowBook(INVALID_MEMBER_ID, BOOK_TO_BORROW_ISBN);
-    })
-    await waitForNextUpdate()
-    const {error} = result.current
-    expect(error.message).toBe(BorrowBookErrorKeys.INVALID_MEMBER);
-});
+test("should not borrow a book if the member is not registered", async () => {
 
+    const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
+    server.use(notRegisteredMember)
+    const memberId = NOT_REGISTERED_MEMBER;
+    const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
 
-test("should not borrow a book if the book does not exist", async () => {
-    const {result, waitForNextUpdate, borrowBook} = arrange({
-        memberIsValid: true,
-        bookExists: false
-    });
     act(() => {
-        borrowBook(VALID_MEMBER_ID, BOOK_TO_BORROW_ISBN);
+        borrowBook(memberId, bookIsbn)
     })
     await waitForNextUpdate()
 
     const {error} = result.current
-    expect(BorrowBookErrorKeys.BOOK_NOT_FOUND).toBe(error.message);
+    expect(error.message).toBe(BorrowBookErrorKeys.MEMBER_NOT_REGISTERED);
 });
 
-function arrange({
-                     memberIsValid = true,
-                     bookExists = true,
-                     initialBorrowedBooks = []
-                 }: {
-    memberIsValid?: boolean;
-    bookExists?: boolean;
-    initialBorrowedBooks?: string[]
-}) {
-    if (!memberIsValid) {
-        server.use(invalidMember);
-    } else if (!bookExists) {
-        server.use(bookDoesNotExist);
-    } else {
-        server.use(validBorrowBook);
-    }
+
+test("should not borrow a book if the book has no available copies", async () => {
+    const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
+    server.use(bookWithoutAvailableCopies)
+    const memberId = REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS;
+    const bookIsbn = BOOK_WITHOUT_AVAILABLE_COPIES;
+
+    act(() => {
+        borrowBook(memberId, bookIsbn)
+    })
+    await waitForNextUpdate()
+
+    const {error} = result.current
+    expect(BorrowBookErrorKeys.BOOK_WITHOUT_AVAILABLE_COPIES).toBe(error.message);
+});
+
+
+function renderUseBorrowBook(initialBorrowedBooks:string[] = []) {
 
     const wrapper = ({children}) => <BorrowBooksByMember
         initialBorrowedBooks={initialBorrowedBooks}>{children}</BorrowBooksByMember>

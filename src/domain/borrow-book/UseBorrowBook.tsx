@@ -2,8 +2,8 @@ import {useAsync} from "react-async";
 import {useBorrowedBooksByMember} from '../borrowed-books-by-member/UseBorrowedBooksByMember'
 
 export enum BorrowBookErrorKeys {
-    INVALID_MEMBER = "INVALID_MEMBER",
-    BOOK_NOT_FOUND = "BOOK_NOT_FOUND",
+    MEMBER_NOT_REGISTERED = "MEMBER_NOT_REGISTERED",
+    BOOK_WITHOUT_AVAILABLE_COPIES = "BOOK_WITHOUT_AVAILABLE_COPIES",
     THRESHOLD_BOOKS = "THRESHOLD_BOOKS",
 }
 
@@ -27,13 +27,8 @@ export interface UseBorrowBook {
 
 async function borrowBookApiCall([
                                      memberId,
-                                     bookId,
-                                     borrowedBooksByMember
+                                     bookId
                                  ]: any): Promise<BorrowBookApiResponse> {
-
-    if (borrowedBooksByMember.length >= MAX_BORROWED_BOOKS) {
-        throw new Error(BorrowBookErrorKeys.THRESHOLD_BOOKS);
-    }
 
     const uri = `/api/member/${memberId}/borrow/book/${bookId}`;
 
@@ -54,13 +49,10 @@ export function useBorrowBook(): UseBorrowBook {
         deferFn: borrowBookApiCall,
         onResolve: addBookOnResolve,
     });
-    const borrowBook = (...args: any) => {
-        return result.run(...args, borrowedBooksByMember);
-    };
 
     return {
         isPending: result.isPending,
-        borrowBook,
+        borrowBook : result.run,
         borrowedBookCopyId: result.data?.borrowedBookCopyId,
         error: result.error,
         borrowedBooksByMember
