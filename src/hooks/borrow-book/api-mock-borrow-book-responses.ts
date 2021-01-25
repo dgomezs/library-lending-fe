@@ -1,5 +1,6 @@
 import {rest} from "msw";
-import {ApiErrorResponse, BorrowBookApiResponse, BorrowBookErrorKeys} from "./UseBorrowBook";
+import {BorrowBookApiResponse, BorrowBookErrorKeys} from "./UseBorrowBook";
+import {ApiErrorResponse} from "src/core/api-error-codes/api-error-codes";
 
 const delay = 300;
 const borrowBookEndPoint = (memberId: string, bookIsbn: string) => `/api/member/${memberId}/borrow/book/${bookIsbn}`;

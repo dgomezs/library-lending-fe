@@ -1,5 +1,5 @@
 import {useAsync} from "react-async";
-import {ApiErrorResponse} from "../../core/api-error-codes/api-error-codes";
+import {ApiErrorResponse} from "src/core/api-error-codes/api-error-codes";
 
 export enum BorrowBookErrorKeys {
     MEMBER_NOT_REGISTERED = "MEMBER_NOT_REGISTERED",

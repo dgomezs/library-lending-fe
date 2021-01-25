@@ -1,5 +1,5 @@
 import {rest} from "msw";
-import {ApiErrorResponse} from "../../core/api-error-codes/api-error-codes";
+import {ApiErrorResponse} from 'src/core/api-error-codes/api-error-codes';
 import {BorrowedBooksByMemberApiResponse, BorrowedBooksByMemberErrorKeys} from "./UseBorrowedBooksByMember";
 
 const delay = 300;

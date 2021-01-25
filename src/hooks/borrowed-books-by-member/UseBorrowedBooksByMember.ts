@@ -1,6 +1,6 @@
 import {useContext} from 'react'
 import {BorrowedBooksByMemberContext} from './BorrowedBooksByMemberContext'
-import {ApiErrorResponse} from "../../core/api-error-codes/api-error-codes";
+import {ApiErrorResponse} from 'src/core/api-error-codes/api-error-codes';
 import {useAsync} from "react-async";
 
 
@@ -11,7 +11,6 @@ export interface BorrowedBooksByMemberApiResponse {
 export enum BorrowedBooksByMemberErrorKeys {
     MEMBER_NOT_REGISTERED = "MEMBER_NOT_REGISTERED",
 }
-
 
 export interface GetBorrowedBooksByMember {
     (memberId: string): void
