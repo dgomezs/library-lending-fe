@@ -1,4 +1,4 @@
-import {act, fireEvent, render, screen, waitForElementToBeRemoved} from "@testing-library/react";
+import {fireEvent, render, screen, waitFor} from "@testing-library/react";
 import {setupServer} from "msw/node";
 import {
     BOOK_WITH_AVAILABLE_COPIES,
@@ -31,7 +31,7 @@ test("should borrow a book", async () => {
     borrowBook(memberId, bookIsbn);
 
     // assert
-    VerifyBorrowedBooks(expectedBorrowedBooks)
+    await VerifyBorrowedBooks(expectedBorrowedBooks)
 
 });
 
@@ -51,9 +51,10 @@ function borrowBook(memberId: string, bookIsbn: string) {
 
 async function VerifyBorrowedBooks(expectedBorrowedBooks: string[]) {
 
+    await waitFor(() => screen.findByText("Your borrow books"));
     for (let book in expectedBorrowedBooks) {
         const expectedMessage = `Borrowed book ${expectedBorrowedBooks[book]}`
-        const borrowedBookElement = await screen.findByText(expectedMessage);
+        const borrowedBookElement = screen.getByText(expectedMessage);
         expect(borrowedBookElement).toBeInTheDocument()
     }
 }

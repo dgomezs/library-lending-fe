@@ -1,4 +1,4 @@
-import {BorrowedBooksByMemberList} from "src/components/organism/borrow-books-dashboard/BorrowedBooksByMemberList";
+import {BorrowedBooksByMemberList} from "src/components/molecules/borrow-books-by-member-list/BorrowedBooksByMemberList";
 import {useBorrowedBooksByMember} from "src/hooks/borrowed-books-by-member/UseBorrowedBooksByMember";
 import {useEffect, useState} from "react";
 import {useBorrowBook} from "src/hooks/borrow-book/UseBorrowBook";
