@@ -1,20 +1,20 @@
-import React from "react";
-import {renderHook, act} from '@testing-library/react-hooks'
+import {act, renderHook} from '@testing-library/react-hooks'
 import {setupServer} from "msw/node";
 import {
-    validBorrowBook,
-    EXPECTED_BOOK_COPY_ID,
-    notRegisteredMember,
-    REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS,
-    NOT_REGISTERED_MEMBER,
-    bookWithoutAvailableCopies,
-    EXPECTED_BOOK_SECOND_COPY_ID,
     BOOK_WITH_AVAILABLE_COPIES,
+    BOOK_WITHOUT_AVAILABLE_COPIES,
+    bookWithoutAvailableCopiesApiResponse,
+    EXPECTED_BOOK_COPY_ID,
+    EXPECTED_BOOK_SECOND_COPY_ID,
+    NOT_REGISTERED_MEMBER,
+    notRegisteredMemberApiResponse,
+    REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS,
+    REGISTERED_MEMBER_WITH_THRESHOLD_BOOKS,
+    registeredMemberWithMaxBorrowedBooksApiResponse,
     SECOND_BOOK_WITH_AVAILABLE_COPIES,
-    registeredMemberWithMaxBorrowedBooks, REGISTERED_MEMBER_WITH_THRESHOLD_BOOKS, BOOK_WITHOUT_AVAILABLE_COPIES,
-} from "./api-mock-responses";
+    validBorrowBookApiResponse,
+} from "./api-mock-borrow-book-responses";
 import {BorrowBookErrorKeys, UseBorrowBook, useBorrowBook} from "./UseBorrowBook";
-import {BorrowBooksByMember} from "../borrowed-books-by-member/BorrowedBooksByMemberContext";
 
 const server = setupServer();
 beforeAll(() => server.listen());
@@ -26,10 +26,10 @@ test("should borrow a book", async () => {
 
     // arrange
     const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
-    server.use(validBorrowBook(EXPECTED_BOOK_COPY_ID))
     const memberId = REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS;
     const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
 
+    server.use(validBorrowBookApiResponse(EXPECTED_BOOK_COPY_ID));
 
     act(() => {
         borrowBook(memberId, bookIsbn)
@@ -37,10 +37,8 @@ test("should borrow a book", async () => {
     await waitForNextUpdate()
 
     // assert
-    const {borrowedBookCopyId, borrowedBooksByMember} = result.current
+    const {borrowedBookCopyId} = result.current
     expect(borrowedBookCopyId).toBe(EXPECTED_BOOK_COPY_ID)
-    expect(borrowedBooksByMember.length).toBe(1)
-    expect(borrowedBooksByMember).toContain(EXPECTED_BOOK_COPY_ID)
 });
 
 test("should borrow two books", async () => {
@@ -53,22 +51,22 @@ test("should borrow two books", async () => {
     const secondBookIsbn = SECOND_BOOK_WITH_AVAILABLE_COPIES
 
 
-    server.use(validBorrowBook(EXPECTED_BOOK_COPY_ID))
+    server.use(validBorrowBookApiResponse(EXPECTED_BOOK_COPY_ID))
     act(() => {
         borrowBook(memberId, firstBookIsbn)
     })
     await waitForNextUpdate()
+    const {borrowedBookCopyId: firstBorrowedCopy} = result.current
+    server.use(validBorrowBookApiResponse(EXPECTED_BOOK_SECOND_COPY_ID))
 
-    server.use(validBorrowBook(EXPECTED_BOOK_SECOND_COPY_ID))
     act(() => {
         borrowBook(memberId, secondBookIsbn)
     })
     await waitForNextUpdate()
+    const {borrowedBookCopyId: secondBorrowedCopy} = result.current
 
-    const {borrowedBooksByMember} = result.current
-    expect(borrowedBooksByMember.length).toBe(2)
-    expect(borrowedBooksByMember).toContain(EXPECTED_BOOK_COPY_ID)
-    expect(borrowedBooksByMember).toContain(EXPECTED_BOOK_SECOND_COPY_ID)
+    expect(firstBorrowedCopy).toBe(EXPECTED_BOOK_COPY_ID)
+    expect(secondBorrowedCopy).toBe(EXPECTED_BOOK_SECOND_COPY_ID)
 });
 
 
@@ -76,7 +74,7 @@ test("should not borrow a book if the member already has borrowed two books", as
 
     // arrange
     const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
-    server.use(registeredMemberWithMaxBorrowedBooks)
+    server.use(registeredMemberWithMaxBorrowedBooksApiResponse)
     const memberId = REGISTERED_MEMBER_WITH_THRESHOLD_BOOKS;
     const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
 
@@ -87,14 +85,14 @@ test("should not borrow a book if the member already has borrowed two books", as
 
 
     const {error} = result.current
-    expect(error.message).toBe(BorrowBookErrorKeys.THRESHOLD_BOOKS);
+    expect(error.name).toBe(BorrowBookErrorKeys.THRESHOLD_BOOKS);
 });
 
 
 test("should not borrow a book if the member is not registered", async () => {
 
     const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
-    server.use(notRegisteredMember)
+    server.use(notRegisteredMemberApiResponse)
     const memberId = NOT_REGISTERED_MEMBER;
     const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
 
@@ -104,13 +102,13 @@ test("should not borrow a book if the member is not registered", async () => {
     await waitForNextUpdate()
 
     const {error} = result.current
-    expect(error.message).toBe(BorrowBookErrorKeys.MEMBER_NOT_REGISTERED);
+    expect(error.name).toBe(BorrowBookErrorKeys.MEMBER_NOT_REGISTERED);
 });
 
 
 test("should not borrow a book if the book has no available copies", async () => {
     const {result, waitForNextUpdate, borrowBook} = renderUseBorrowBook()
-    server.use(bookWithoutAvailableCopies)
+    server.use(bookWithoutAvailableCopiesApiResponse)
     const memberId = REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS;
     const bookIsbn = BOOK_WITHOUT_AVAILABLE_COPIES;
 
@@ -120,16 +118,12 @@ test("should not borrow a book if the book has no available copies", async () =>
     await waitForNextUpdate()
 
     const {error} = result.current
-    expect(BorrowBookErrorKeys.BOOK_WITHOUT_AVAILABLE_COPIES).toBe(error.message);
+    expect(error.name).toBe(BorrowBookErrorKeys.BOOK_WITHOUT_AVAILABLE_COPIES);
 });
 
 
-function renderUseBorrowBook(initialBorrowedBooks:string[] = []) {
-
-    const wrapper = ({children}) => <BorrowBooksByMember
-        initialBorrowedBooks={initialBorrowedBooks}>{children}</BorrowBooksByMember>
-
-    const {result, waitForNextUpdate} = renderHook<any, UseBorrowBook>(() => useBorrowBook(), {wrapper});
+function renderUseBorrowBook() {
+    const {result, waitForNextUpdate} = renderHook<any, UseBorrowBook>(() => useBorrowBook());
     return {result, waitForNextUpdate, borrowBook: result.current.borrowBook}
 }
 

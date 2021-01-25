@@ -17,7 +17,7 @@ export const SECOND_BOOK_WITH_AVAILABLE_COPIES = "1"
 export const BOOK_WITHOUT_AVAILABLE_COPIES = "2";
 
 
-export const validBorrowBook = (borrowedBookCopyId: string) => rest.post<BorrowBookApiResponse, any>(
+export const validBorrowBookApiResponse = (borrowedBookCopyId: string) => rest.post<BorrowBookApiResponse, any>(
     borrowBookEndPoint(REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS, BOOK_WITH_AVAILABLE_COPIES),
     async (req, res, ctx) => {
         return res(
@@ -27,7 +27,7 @@ export const validBorrowBook = (borrowedBookCopyId: string) => rest.post<BorrowB
     }
 );
 
-export const notRegisteredMember = rest.post<ApiErrorResponse, any>(
+export const notRegisteredMemberApiResponse = rest.post<ApiErrorResponse, any>(
     borrowBookEndPoint(NOT_REGISTERED_MEMBER, BORROW_BOOK_PARAM),
     async (req, res, ctx) => {
         return res(
@@ -38,7 +38,7 @@ export const notRegisteredMember = rest.post<ApiErrorResponse, any>(
     }
 );
 
-export const registeredMemberWithMaxBorrowedBooks = rest.post<ApiErrorResponse, any>(
+export const registeredMemberWithMaxBorrowedBooksApiResponse = rest.post<ApiErrorResponse, any>(
     borrowBookEndPoint(REGISTERED_MEMBER_WITH_THRESHOLD_BOOKS, BORROW_BOOK_PARAM),
     async (req, res, ctx) => {
         return res(
@@ -49,7 +49,7 @@ export const registeredMemberWithMaxBorrowedBooks = rest.post<ApiErrorResponse, 
     }
 );
 
-export const bookWithoutAvailableCopies = rest.post<ApiErrorResponse, any>(
+export const bookWithoutAvailableCopiesApiResponse = rest.post<ApiErrorResponse, any>(
     borrowBookEndPoint(REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS, BOOK_WITHOUT_AVAILABLE_COPIES),
     async (req, res, ctx) => {
         return res(
