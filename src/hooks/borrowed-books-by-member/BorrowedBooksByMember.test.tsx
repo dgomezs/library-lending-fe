@@ -1,4 +1,3 @@
-import React from "react";
 import {act, renderHook} from '@testing-library/react-hooks'
 import {setupServer} from "msw/node";
 import {
@@ -8,7 +7,7 @@ import {
     notRegisteredMemberApiResponse,
     REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS
 } from "./api-mock-borrowed-books-member-responses";
-import {BorrowBooksByMember} from "./BorrowedBooksByMemberContext";
+import {BorrowBooksByMember} from "./BorrowBooksByMember";
 import {
     BorrowedBooksByMemberErrorKeys,
     UseBorrowedBooksByMember,
@@ -62,9 +61,9 @@ test("should get an error trying to get the current borrowed books by a non regi
 
 function renderUseBorrowedBooksByMember(initialBorrowedBooks: string[] = []) {
 
-    const wrapper = ({children}) => <BorrowBooksByMember
-        initialBorrowedBooks={initialBorrowedBooks}>{children}</BorrowBooksByMember>
-
+    const wrapper = ({children}) =>
+        <BorrowBooksByMember
+            initialBorrowedBooks={initialBorrowedBooks}>{children}</BorrowBooksByMember>
     const {
         result,
         waitForNextUpdate

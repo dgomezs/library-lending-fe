@@ -1,5 +1,5 @@
 import {useContext} from 'react'
-import {BorrowedBooksByMemberContext} from './BorrowedBooksByMemberContext'
+import {BorrowedBooksByMemberContext} from 'src/hooks/borrowed-books-by-member/BorrowedBooksByMemberContext'
 import {ApiErrorResponse} from 'src/core/api-error-codes/api-error-codes';
 import {useAsync} from "react-async";
 
@@ -19,7 +19,8 @@ export interface GetBorrowedBooksByMember {
 export interface UseBorrowedBooksByMember {
     borrowedBooksByMember: string[],
     getBorrowedBooksByMember: GetBorrowedBooksByMember,
-    error: Error
+    error: Error,
+    isPending: boolean
 }
 
 async function getBorrowedBooksByMemberApiCall([
@@ -53,5 +54,10 @@ export function useBorrowedBooksByMember(): UseBorrowedBooksByMember {
     });
 
 
-    return {borrowedBooksByMember, getBorrowedBooksByMember: result.run, error: result.error}
+    return {
+        borrowedBooksByMember,
+        getBorrowedBooksByMember: result.run,
+        error: result.error,
+        isPending: result.isPending
+    }
 }

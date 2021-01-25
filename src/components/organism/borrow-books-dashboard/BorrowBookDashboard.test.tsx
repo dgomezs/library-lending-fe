@@ -1,4 +1,4 @@
-import {fireEvent, screen} from "@testing-library/react";
+import {act, fireEvent, render, screen, waitForElementToBeRemoved} from "@testing-library/react";
 import {setupServer} from "msw/node";
 import {
     BOOK_WITH_AVAILABLE_COPIES,
@@ -7,6 +7,8 @@ import {
     validBorrowBookApiResponse
 } from 'src/hooks/borrow-book/api-mock-borrow-book-responses';
 import {borrowedBooksByMemberApiResponse} from "src/hooks/borrowed-books-by-member/api-mock-borrowed-books-member-responses";
+import {BorrowBookDashboard} from './BorrowBookDashboard'
+import {BorrowBooksByMember} from "src/hooks/borrowed-books-by-member/BorrowBooksByMember";
 
 const server = setupServer();
 beforeAll(() => server.listen());
@@ -19,34 +21,40 @@ test("should borrow a book", async () => {
     // arrange
     const initialBorrowedBooks: string[] = [];
     const expectedBorrowedBooks = [EXPECTED_BOOK_COPY_ID]
-    renderDashboard(initialBorrowedBooks);
     const memberId = REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS;
     const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
+    renderDashboard(initialBorrowedBooks, memberId);
 
     server.use(validBorrowBookApiResponse(EXPECTED_BOOK_COPY_ID),
         borrowedBooksByMemberApiResponse(memberId, expectedBorrowedBooks));
 
-    borrowBook(memberId, bookIsbn)
+    borrowBook(memberId, bookIsbn);
 
     // assert
     VerifyBorrowedBooks(expectedBorrowedBooks)
 
 });
 
-function renderDashboard(initialBorrowedBooks: string[]) {
-
-
+function renderDashboard(initialBorrowedBooks: string[], memberId: string) {
+    const wrapper = ({children}) => <BorrowBooksByMember
+        initialBorrowedBooks={initialBorrowedBooks}>{children}</BorrowBooksByMember>
+    render(<BorrowBookDashboard memberId={memberId}/>, {wrapper});
 }
 
 
 function borrowBook(memberId: string, bookIsbn: string) {
-    const submitButton = screen.getByText("/Borrow book/i");
-    const bookIdInput = screen.getByLabelText("/Book to borrow/i");
+    const submitButton = screen.getByText("Borrow book");
+    const bookIdInput = screen.getByLabelText("Book to borrow");
     fireEvent.change(bookIdInput, {target: {value: bookIsbn}});
     fireEvent.click(submitButton);
 }
 
-function VerifyBorrowedBooks(expectedBorrowedBooks: string[]) {
+async function VerifyBorrowedBooks(expectedBorrowedBooks: string[]) {
 
+    for (let book in expectedBorrowedBooks) {
+        const expectedMessage = `Borrowed book ${expectedBorrowedBooks[book]}`
+        const borrowedBookElement = await screen.findByText(expectedMessage);
+        expect(borrowedBookElement).toBeInTheDocument()
+    }
 }
 
