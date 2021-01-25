@@ -1,11 +1,12 @@
-import {act} from '@testing-library/react'
+import {fireEvent, screen} from "@testing-library/react";
 import {setupServer} from "msw/node";
-import {REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS} from 'src/hooks/borrow-book/api-mock-borrow-book-responses';
 import {
     BOOK_WITH_AVAILABLE_COPIES,
     EXPECTED_BOOK_COPY_ID,
+    REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS,
     validBorrowBookApiResponse
 } from 'src/hooks/borrow-book/api-mock-borrow-book-responses';
+import {borrowedBooksByMemberApiResponse} from "src/hooks/borrowed-books-by-member/api-mock-borrowed-books-member-responses";
 
 const server = setupServer();
 beforeAll(() => server.listen());
@@ -16,28 +17,36 @@ afterEach(() => server.resetHandlers());
 test("should borrow a book", async () => {
 
     // arrange
-    renderDashboard();
+    const initialBorrowedBooks: string[] = [];
+    const expectedBorrowedBooks = [EXPECTED_BOOK_COPY_ID]
+    renderDashboard(initialBorrowedBooks);
     const memberId = REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS;
     const bookIsbn = BOOK_WITH_AVAILABLE_COPIES;
 
-    server.use(validBorrowBookApiResponse(EXPECTED_BOOK_COPY_ID));
+    server.use(validBorrowBookApiResponse(EXPECTED_BOOK_COPY_ID),
+        borrowedBooksByMemberApiResponse(memberId, expectedBorrowedBooks));
 
-    act(() => {
-        borrowBook(memberId, bookIsbn)
-    })
-    await waitForNextUpdate()
+    borrowBook(memberId, bookIsbn)
 
     // assert
-    const {borrowedBookCopyId} = result.current
-    expect(borrowedBookCopyId).toBe(EXPECTED_BOOK_COPY_ID)
+    VerifyBorrowedBooks(expectedBorrowedBooks)
+
 });
 
+function renderDashboard(initialBorrowedBooks: string[]) {
 
-function renderDashboard() {
-    const {result, waitForNextUpdate} = render<any, UseBorrowBook>(() => useBorrowBook());
+
 }
 
+
 function borrowBook(memberId: string, bookIsbn: string) {
+    const submitButton = screen.getByText("/Borrow book/i");
+    const bookIdInput = screen.getByLabelText("/Book to borrow/i");
+    fireEvent.change(bookIdInput, {target: {value: bookIsbn}});
+    fireEvent.click(submitButton);
+}
+
+function VerifyBorrowedBooks(expectedBorrowedBooks: string[]) {
 
 }
 
