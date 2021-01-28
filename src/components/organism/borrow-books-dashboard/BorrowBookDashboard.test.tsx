@@ -8,7 +8,8 @@ import {
 } from 'src/hooks/borrow-book/api-mock-borrow-book-responses';
 import {borrowedBooksByMemberApiResponse} from "src/hooks/borrowed-books-by-member/api-mock-borrowed-books-member-responses";
 import {BorrowBookDashboard} from './BorrowBookDashboard'
-import {BorrowBooksByMember} from "src/hooks/borrowed-books-by-member/BorrowBooksByMember";
+import initializeStore from "src/store/store";
+import {Provider} from "react-redux";
 
 const server = setupServer();
 beforeAll(() => server.listen());
@@ -36,8 +37,10 @@ test("should borrow a book", async () => {
 });
 
 function renderDashboard(initialBorrowedBooks: string[], memberId: string) {
-    const wrapper = ({children}) => <BorrowBooksByMember
-        initialBorrowedBooks={initialBorrowedBooks}>{children}</BorrowBooksByMember>
+    const store = initializeStore({borrowedBooksByMemberReducer: {borrowedBooksByMember: initialBorrowedBooks}});
+
+    const wrapper = ({children}: { children: any }) =>
+        <Provider store={store}>{children}</Provider>
     render(<BorrowBookDashboard memberId={memberId}/>, {wrapper});
 }
 

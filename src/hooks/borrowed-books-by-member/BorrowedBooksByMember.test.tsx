@@ -1,4 +1,5 @@
 import {act, renderHook} from '@testing-library/react-hooks'
+import {Provider} from 'react-redux'
 import {setupServer} from "msw/node";
 import {
     borrowedBooksByMemberApiResponse,
@@ -7,12 +8,12 @@ import {
     notRegisteredMemberApiResponse,
     REGISTERED_MEMBER_WITH_LESS_THAN_THRESHOLD_BORROWED_BOOKS
 } from "./api-mock-borrowed-books-member-responses";
-import {BorrowBooksByMember} from "./BorrowBooksByMember";
 import {
     BorrowedBooksByMemberErrorKeys,
     UseBorrowedBooksByMember,
     useBorrowedBooksByMember
 } from "./UseBorrowedBooksByMember";
+import initializeStore from "src/store/store";
 
 const server = setupServer();
 beforeAll(() => server.listen());
@@ -55,15 +56,16 @@ test("should get an error trying to get the current borrowed books by a non regi
 
     // assert
     const {error} = result.current
-    expect(error.name).toBe(BorrowedBooksByMemberErrorKeys.MEMBER_NOT_REGISTERED)
+    expect(error?.name).toBe(BorrowedBooksByMemberErrorKeys.MEMBER_NOT_REGISTERED)
 });
 
 
 function renderUseBorrowedBooksByMember(initialBorrowedBooks: string[] = []) {
 
-    const wrapper = ({children}) =>
-        <BorrowBooksByMember
-            initialBorrowedBooks={initialBorrowedBooks}>{children}</BorrowBooksByMember>
+    const store = initializeStore({borrowedBooksByMemberReducer: {borrowedBooksByMember: initialBorrowedBooks}});
+
+    const wrapper = ({children}: { children: any }) =>
+        <Provider store={store}>{children}</Provider>
     const {
         result,
         waitForNextUpdate

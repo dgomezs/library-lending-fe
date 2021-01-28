@@ -1,7 +1,9 @@
-import {useContext} from 'react'
-import {BorrowedBooksByMemberContext} from 'src/hooks/borrowed-books-by-member/BorrowedBooksByMemberContext'
 import {ApiErrorResponse} from 'src/core/api-error-codes/api-error-codes';
 import {useAsync} from "react-async";
+import {useDispatch, useSelector} from "react-redux";
+import {GlobalState} from "src/store/reducer";
+import {sendBorrowedBooksByMemberSuccess} from "src/hooks/borrowed-books-by-member/redux/BorrowBooksByMemberActions";
+import {BorrowedBooksByMemberState} from "src/hooks/borrowed-books-by-member/redux/BorrowBooksByMemberReducer";
 
 
 export interface BorrowedBooksByMemberApiResponse {
@@ -19,7 +21,7 @@ export interface GetBorrowedBooksByMember {
 export interface UseBorrowedBooksByMember {
     borrowedBooksByMember: string[],
     getBorrowedBooksByMember: GetBorrowedBooksByMember,
-    error: Error,
+    error: Error | undefined,
     isPending: boolean
 }
 
@@ -42,15 +44,13 @@ async function getBorrowedBooksByMemberApiCall([
 
 
 export function useBorrowedBooksByMember(): UseBorrowedBooksByMember {
-    const context = useContext<BorrowedBooksByMemberContext>(BorrowedBooksByMemberContext)
-    if (context === undefined) {
-        throw new Error('useBorrowedBooksByMember must be used within a <BorrowBooksByMember />')
-    }
-    const {borrowedBooksByMember, setBorrowedBooksByMember} = context
+
+    const {borrowedBooksByMember} = useSelector<GlobalState, BorrowedBooksByMemberState>(state => state.borrowedBooksByMemberReducer);
+    const dispatch = useDispatch();
 
     const result = useAsync<BorrowedBooksByMemberApiResponse>({
         deferFn: getBorrowedBooksByMemberApiCall,
-        onResolve: (data => setBorrowedBooksByMember(data.borrowedBooks))
+        onResolve: (data => dispatch(sendBorrowedBooksByMemberSuccess(data.borrowedBooks)))
     });
 
 
