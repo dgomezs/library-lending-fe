@@ -45,7 +45,7 @@ async function getBorrowedBooksByMemberApiCall([
 
 export function useBorrowedBooksByMember(): UseBorrowedBooksByMember {
 
-    const {borrowedBooksByMember} = useSelector<GlobalState, BorrowedBooksByMemberState>(state => state.borrowedBooksByMemberReducer);
+    const {borrowedBooksByMember} = useSelector<GlobalState, BorrowedBooksByMemberState>(state => state.borrowedBooksByMember);
     const dispatch = useDispatch();
 
     const result = useAsync<BorrowedBooksByMemberApiResponse>({

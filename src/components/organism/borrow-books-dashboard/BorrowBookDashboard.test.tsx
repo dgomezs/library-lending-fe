@@ -37,7 +37,7 @@ test("should borrow a book", async () => {
 });
 
 function renderDashboard(initialBorrowedBooks: string[], memberId: string) {
-    const store = initializeStore({borrowedBooksByMemberReducer: {borrowedBooksByMember: initialBorrowedBooks}});
+    const store = initializeStore({borrowedBooksByMember: {borrowedBooksByMember: initialBorrowedBooks}});
 
     const wrapper = ({children}: { children: any }) =>
         <Provider store={store}>{children}</Provider>

@@ -62,7 +62,7 @@ test("should get an error trying to get the current borrowed books by a non regi
 
 function renderUseBorrowedBooksByMember(initialBorrowedBooks: string[] = []) {
 
-    const store = initializeStore({borrowedBooksByMemberReducer: {borrowedBooksByMember: initialBorrowedBooks}});
+    const store = initializeStore({borrowedBooksByMember: {borrowedBooksByMember: initialBorrowedBooks}});
 
     const wrapper = ({children}: { children: any }) =>
         <Provider store={store}>{children}</Provider>

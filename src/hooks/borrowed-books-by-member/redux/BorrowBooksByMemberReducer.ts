@@ -12,7 +12,7 @@ const initialState: BorrowedBooksByMemberState = {
 }
 
 
-export function borrowedBooksByMemberReducer(
+export function borrowedBooksByMember(
     state = initialState,
     action: BorrowBooksByMemberActionTypes
 ): BorrowedBooksByMemberState {
