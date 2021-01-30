@@ -55,10 +55,10 @@ function borrowBook(memberId: string, bookIsbn: string) {
 async function VerifyBorrowedBooks(expectedBorrowedBooks: string[]) {
 
     await waitFor(() => screen.findByText("Your borrow books"));
-    for (let book in expectedBorrowedBooks) {
-        const expectedMessage = `Borrowed book ${expectedBorrowedBooks[book]}`
+    expectedBorrowedBooks.forEach(item => {
+        const expectedMessage = `Borrowed book ${item}`
         const borrowedBookElement = screen.getByText(expectedMessage);
         expect(borrowedBookElement).toBeInTheDocument()
-    }
+    });
 }
 
