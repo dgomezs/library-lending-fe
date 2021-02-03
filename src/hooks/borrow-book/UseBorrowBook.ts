@@ -12,10 +12,10 @@ export interface BorrowBookApiResponse {
 }
 
 export interface UseBorrowBook {
-    borrowedBookCopyId?: string,
+    borrowedBookCopyId: string | undefined,
     borrowBook: any,
     isPending: boolean,
-    error: Error
+    error: Error | undefined
 }
 
 async function borrowBookApiCall([

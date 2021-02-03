@@ -55,7 +55,7 @@ test("should get an error trying to get the current borrowed books by a non regi
 
     // assert
     const {error} = result.current
-    expect(error.name).toBe(BorrowedBooksByMemberErrorKeys.MEMBER_NOT_REGISTERED)
+    expect(error?.name).toBe(BorrowedBooksByMemberErrorKeys.MEMBER_NOT_REGISTERED)
 });
 
 

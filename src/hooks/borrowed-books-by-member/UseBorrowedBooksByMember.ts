@@ -19,7 +19,7 @@ export interface GetBorrowedBooksByMember {
 export interface UseBorrowedBooksByMember {
     borrowedBooksByMember: string[],
     getBorrowedBooksByMember: GetBorrowedBooksByMember,
-    error: Error,
+    error: Error | undefined,
     isPending: boolean
 }
 
@@ -39,6 +39,7 @@ async function getBorrowedBooksByMemberApiCall([
 
     return res.json();
 }
+
 
 
 export function useBorrowedBooksByMember(): UseBorrowedBooksByMember {

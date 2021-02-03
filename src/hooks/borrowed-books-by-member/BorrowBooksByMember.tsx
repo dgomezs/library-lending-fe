@@ -3,9 +3,9 @@ import {useState} from "react";
 import {BorrowedBooksByMemberContext} from "src/hooks/borrowed-books-by-member/BorrowedBooksByMemberContext";
 
 export const BorrowBooksByMember = ({
-                                 children,
-                                 initialBorrowedBooks = []
-                             }: { children: React.ReactNode, initialBorrowedBooks?: string[] }) => {
+                                        children,
+                                        initialBorrowedBooks = []
+                                    }: { children: React.ReactNode, initialBorrowedBooks?: string[] }) => {
 
     const [borrowedBooksByMember, setBorrowedBooksByMember] = useState(initialBorrowedBooks)
 
